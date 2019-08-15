@@ -38,7 +38,7 @@ def import_xml_etree(filename):
 """KEGG Handling functions"""
 
 
-def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager):
+def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager, orientdb_client=None):
     """Process API query.
 
     :param dict[str,str] node_meta_data: JSON retrieved from the API
@@ -53,7 +53,7 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager):
 
         for resource, identifier in node_meta_data['DBLINKS']:
 
-            if resource not in {HGNC, UNIPROT, CHEBI, PUBCHEM}:
+            if resource not in {HGNC, UNIPROT, CHEBI, PUBCHEM, MGI, RGD, FLYBASE}:
                 continue
 
             # Get protein identifiers
@@ -65,6 +65,30 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager):
 
                 node_dict[HGNC] = identifier
                 node_dict[HGNC_SYMBOL] = hgnc_entry.symbol
+
+            elif resource == MGI:
+                sql = f"SELECT symbol FROM mgi WHERE accession = {identifier}"
+                client = orientdb_client if orientdb_client else connect_to_client()
+                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+
+                node_dict[MGI] = identifier
+                node_dict[MGI_SYMBOL] = symbol
+
+            elif resource == RGD:
+                sql = f"SELECT symbol FROM rgd WHERE gene_rgd_id = {identifier}"
+                client = orientdb_client if orientdb_client else connect_to_client()
+                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+
+                node_dict[RGD] = identifier
+                node_dict[RGD_SYMBOL] = symbol
+
+            elif resource == FLYBASE:
+                sql = f"SELECT symbol FROM flybase WHERE flybase_id = '{identifier}'"
+                client = orientdb_client if orientdb_client else connect_to_client()
+                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+
+                node_dict[FLYBASE] = identifier
+                node_dict[FLYBASE_SYMBOL] = symbol
 
             elif resource == UNIPROT:
                 hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(identifier)

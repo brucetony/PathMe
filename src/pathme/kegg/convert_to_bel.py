@@ -191,6 +191,24 @@ def gene_to_bel_node(graph, node):
                 graph.add_node_from_data(protein_node)
                 return protein_node
 
+            elif MGI in attribute:
+                protein_node = protein(namespace=MGI, name=attribute[MGI_SYMBOL],
+                                       identifier=attribute[MGI])
+                graph.add_node_from_data(protein_node)
+                return protein_node
+
+            elif RGD in attribute:
+                protein_node = protein(namespace=RGD, name=attribute[RGD_SYMBOL],
+                                       identifier=attribute[RGD])
+                graph.add_node_from_data(protein_node)
+                return protein_node
+
+            elif FLYBASE in attribute:
+                protein_node = protein(namespace=FLYBASE.upper(), name=attribute[FLYBASE_SYMBOL],
+                                       identifier=attribute[FLYBASE])
+                graph.add_node_from_data(protein_node)
+                return protein_node
+
             else:
                 protein_node = protein(namespace=KEGG.upper(), name=attribute[KEGG_ID], identifier=attribute[KEGG_ID])
                 graph.add_node_from_data(protein_node)
@@ -224,6 +242,22 @@ def flatten_gene_to_bel_node(graph, node):
             graph.add_node_from_data(protein_node)
             return protein_node
 
+        elif MGI in node_dict:
+            protein_node = protein(namespace=MGI, name=node_dict[MGI_SYMBOL], identifier=node_dict[MGI])
+            graph.add_node_from_data(protein_node)
+            return protein_node
+
+        elif RGD in node_dict:
+            protein_node = protein(namespace=RGD, name=node_dict[RGD_SYMBOL], identifier=node_dict[RGD])
+            graph.add_node_from_data(protein_node)
+            return protein_node
+
+        elif FLYBASE in node_dict:
+            protein_node = protein(namespace=FLYBASE.upper(), name=node_dict[FLYBASE_SYMBOL],
+                                   identifier=node_dict[FLYBASE])
+            graph.add_node_from_data(protein_node)
+            return protein_node
+
         elif UNIPROT in node_dict:
             protein_node = protein(namespace=UNIPROT.upper(), name=node_dict[UNIPROT], identifier=node_dict[UNIPROT])
             graph.add_node_from_data(protein_node)
@@ -241,6 +275,22 @@ def flatten_gene_to_bel_node(graph, node):
 
         if HGNC in node_dict:
             protein_node = protein(namespace=HGNC, name=node_dict[HGNC_SYMBOL], identifier=node_dict[HGNC])
+            graph.add_node_from_data(protein_node)
+            proteins_list.append(protein_node)
+
+        elif MGI in node_dict:
+            protein_node = protein(namespace=MGI, name=node_dict[MGI_SYMBOL], identifier=node_dict[MGI])
+            graph.add_node_from_data(protein_node)
+            proteins_list.append(protein_node)
+
+        elif RGD in node_dict:
+            protein_node = protein(namespace=RGD, name=node_dict[RGD_SYMBOL], identifier=node_dict[RGD])
+            graph.add_node_from_data(protein_node)
+            proteins_list.append(protein_node)
+
+        elif FLYBASE in node_dict:
+            protein_node = protein(namespace=FLYBASE.upper(), name=node_dict[FLYBASE_SYMBOL],
+                                   identifier=node_dict[FLYBASE])
             graph.add_node_from_data(protein_node)
             proteins_list.append(protein_node)
 
@@ -389,6 +439,19 @@ def flatten_complex_to_bel_node(graph, node):
 
         if HGNC in node_dict:
             protein_node = protein(namespace=HGNC, name=node_dict[HGNC_SYMBOL], identifier=node_dict[HGNC])
+            members.append(protein_node)
+
+        elif MGI in node_dict:
+            protein_node = protein(namespace=MGI, name=node_dict[MGI_SYMBOL], identifier=node_dict[MGI])
+            members.append(protein_node)
+
+        elif RGD in node_dict:
+            protein_node = protein(namespace=RGD, name=node_dict[RGD_SYMBOL], identifier=node_dict[RGD])
+            members.append(protein_node)
+
+        elif FLYBASE in node_dict:
+            protein_node = protein(namespace=FLYBASE.upper(), name=node_dict[FLYBASE_SYMBOL],
+                                   identifier=node_dict[FLYBASE])
             members.append(protein_node)
 
         elif UNIPROT in node_dict:
