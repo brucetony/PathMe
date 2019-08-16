@@ -67,38 +67,47 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager, orientd
                 node_dict[HGNC_SYMBOL] = hgnc_entry.symbol
 
             elif resource == MGI:
-                sql = f"SELECT symbol FROM mgi WHERE accession = {identifier}"
-                client = orientdb_client if orientdb_client else connect_to_client()
-                data = client.command(sql)
+                client = orientdb_client if orientdb_client else None
+                network = Network(client=client)
+                data = network.query_class(class_name="mgi",
+                                           columns=['symbol'],
+                                           with_rid=False,
+                                           accession=identifier)
 
                 if not data:
                     continue
 
-                symbol = data[0].oRecordData['symbol']  # Use the first element
-                node_dict[FLYBASE] = identifier
-                node_dict[FLYBASE_SYMBOL] = symbol
+                symbol = data[0]['symbol']  # Use the first element
+                node_dict[MGI] = identifier
+                node_dict[MGI_SYMBOL] = symbol
 
             elif resource == RGD:
-                sql = f"SELECT symbol FROM rgd WHERE gene_rgd_id = {identifier}"
-                client = orientdb_client if orientdb_client else connect_to_client()
-                data = client.command(sql)
+                client = orientdb_client if orientdb_client else None
+                network = Network(client=client)
+                data = network.query_class(class_name="rgd",
+                                           columns=['symbol'],
+                                           with_rid=False,
+                                           gene_rgd_id=identifier)
 
                 if not data:
                     continue
 
-                symbol = data[0].oRecordData['symbol']  # Use the first element
-                node_dict[FLYBASE] = identifier
-                node_dict[FLYBASE_SYMBOL] = symbol
+                symbol = data[0]['symbol']  # Use the first element
+                node_dict[RGD] = identifier
+                node_dict[RGD_SYMBOL] = symbol
 
             elif resource == FLYBASE:
-                sql = f"SELECT symbol FROM flybase WHERE flybase_id = '{identifier}'"
-                client = orientdb_client if orientdb_client else connect_to_client()
-                data = client.command(sql)
+                client = orientdb_client if orientdb_client else None
+                network = Network(client=client)
+                data = network.query_class(class_name="flybase",
+                                           columns=['symbol'],
+                                           with_rid=False,
+                                           flybase_id=identifier)
 
                 if not data:
                     continue
 
-                symbol = data[0].oRecordData['symbol']  # Use the first element
+                symbol = data[0]['symbol']  # Use the first element
                 node_dict[FLYBASE] = identifier
                 node_dict[FLYBASE_SYMBOL] = symbol
 
