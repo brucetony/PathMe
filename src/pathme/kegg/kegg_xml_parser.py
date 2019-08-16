@@ -69,24 +69,36 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager, orientd
             elif resource == MGI:
                 sql = f"SELECT symbol FROM mgi WHERE accession = {identifier}"
                 client = orientdb_client if orientdb_client else connect_to_client()
-                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+                data = client.command(sql)
 
-                node_dict[MGI] = identifier
-                node_dict[MGI_SYMBOL] = symbol
+                if not data:
+                    continue
+
+                symbol = data[0].oRecordData['symbol']  # Use the first element
+                node_dict[FLYBASE] = identifier
+                node_dict[FLYBASE_SYMBOL] = symbol
 
             elif resource == RGD:
                 sql = f"SELECT symbol FROM rgd WHERE gene_rgd_id = {identifier}"
                 client = orientdb_client if orientdb_client else connect_to_client()
-                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+                data = client.command(sql)
 
-                node_dict[RGD] = identifier
-                node_dict[RGD_SYMBOL] = symbol
+                if not data:
+                    continue
+
+                symbol = data[0].oRecordData['symbol']  # Use the first element
+                node_dict[FLYBASE] = identifier
+                node_dict[FLYBASE_SYMBOL] = symbol
 
             elif resource == FLYBASE:
                 sql = f"SELECT symbol FROM flybase WHERE flybase_id = '{identifier}'"
                 client = orientdb_client if orientdb_client else connect_to_client()
-                symbol = client.command(sql)[0].oRecordData['symbol']  # Use the first element
+                data = client.command(sql)
 
+                if not data:
+                    continue
+
+                symbol = data[0].oRecordData['symbol']  # Use the first element
                 node_dict[FLYBASE] = identifier
                 node_dict[FLYBASE_SYMBOL] = symbol
 
