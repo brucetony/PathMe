@@ -753,7 +753,7 @@ def kegg_to_pickles(resource_files, resource_folder, hgnc_manager, chebi_manager
         pickle_path = os.path.join(
             export_folder if export_folder else KEGG_BEL,
             '{}_{}.pickle'.format(
-                kgml_file.strip('.xml'),
+                kgml_file.split(".")[0],
                 'flatten' if flatten else 'unflatten')  # By default graphs are unflatten
         )
 
