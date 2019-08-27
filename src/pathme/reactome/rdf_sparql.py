@@ -16,6 +16,8 @@ from rdflib import URIRef
 from rdflib.namespace import DC, DCTERMS, Namespace, OWL, RDF, RDFS, SKOS, XSD
 from tqdm import tqdm
 
+from ..constants import REACTOME_SPECIES_TO_ID
+
 log = logging.getLogger(__name__)
 
 """SPARQL string queries"""
@@ -270,6 +272,9 @@ def get_reactome_statistics(resource_file, hgnc_manager, chebi_manager):
     log.info('Parsing Reactome RDF file')
     rdf_graph = parse_rdf(resource_file, format='xml')
 
+    species_name = os.path.basename(resource_file).split(".")[0]
+    species_id = REACTOME_SPECIES_TO_ID[species_name]
+
     spaqrl_all_pathways = rdf_graph.query(GET_ALL_PATHWAYS, initNs=PREFIXES)
 
     global_statistics = defaultdict(lambda: defaultdict(int))
@@ -285,7 +290,7 @@ def get_reactome_statistics(resource_file, hgnc_manager, chebi_manager):
             edge['metadata']['interaction_type'] for edge in edges
         ]
 
-        bel_graph = convert_to_bel(nodes, edges, pathway_metadata, hgnc_manager, chebi_manager)
+        bel_graph = convert_to_bel(nodes, edges, pathway_metadata, hgnc_manager, chebi_manager, species_id)
 
         global_statistics, pathway_statistics = get_pathway_statitics(
             nodes_types, edges_types, bel_graph, global_statistics=global_statistics
@@ -294,7 +299,7 @@ def get_reactome_statistics(resource_file, hgnc_manager, chebi_manager):
     return global_statistics
 
 
-def reactome_pathway_to_bel(pathway_uri, rdf_graph, hgnc_manager, chebi_manager):
+def reactome_pathway_to_bel(pathway_uri, rdf_graph, hgnc_manager, chebi_manager, species):
     """Convert a Reactome pathway to BEL.
 
     :param str filepath: path to the file
@@ -305,7 +310,7 @@ def reactome_pathway_to_bel(pathway_uri, rdf_graph, hgnc_manager, chebi_manager)
 
     nodes, interactions = _get_pathway_components(pathway_uri, rdf_graph)
 
-    return convert_to_bel(nodes, interactions, pathway_metadata, hgnc_manager, chebi_manager)
+    return convert_to_bel(nodes, interactions, pathway_metadata, hgnc_manager, chebi_manager, species)
 
 
 def reactome_to_bel(resource_file, hgnc_manager, chebi_manager, export_folder=REACTOME_BEL):
@@ -318,9 +323,12 @@ def reactome_to_bel(resource_file, hgnc_manager, chebi_manager, export_folder=RE
     log.info('Parsing Reactome RDF file')
     rdf_graph = parse_rdf(resource_file, format='xml')
 
+    species_name = os.path.basename(resource_file).split(".")[0]
+    species_id = REACTOME_SPECIES_TO_ID[species_name]
     pathways_uris_to_names = rdf_graph.query(GET_ALL_PATHWAYS, initNs=PREFIXES)
 
-    for pathway_uri, pathway_name in tqdm(pathways_uris_to_names, desc=f'Exporting Reactome BEL to {export_folder}'):
+    for pathway_uri, pathway_name in tqdm(pathways_uris_to_names,
+                                          desc=f'Exporting Reactome BEL for species {species_id} to {export_folder}'):
 
         # Take the identifier of the pathway which is placed at the end of the URL and also strip the number
         # next to it. (probably version of pathway)
@@ -332,7 +340,7 @@ def reactome_to_bel(resource_file, hgnc_manager, chebi_manager, export_folder=RE
         if os.path.exists(pickle_file):
             continue
 
-        bel_graph = reactome_pathway_to_bel(pathway_uri, rdf_graph, hgnc_manager, chebi_manager)
+        bel_graph = reactome_pathway_to_bel(pathway_uri, rdf_graph, hgnc_manager, chebi_manager, species_id)
 
         # Export BELGraph to pickle
         to_pickle(bel_graph, pickle_file)

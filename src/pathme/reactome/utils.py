@@ -4,7 +4,7 @@
 
 import logging
 import tarfile
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from bio2bel_chebi import Manager as ChebiManager
 from bio2bel_hgnc import Manager as HgncManager
@@ -12,7 +12,9 @@ from bio2bel_hgnc.models import HumanGene
 from pybel.dsl import protein
 
 from pathme.utils import parse_id_uri
-from ..constants import ENSEMBL, HGNC, UNIPROT, UNKNOWN
+from ebel.constants import SPECIES_NAMESPACE
+from ebel.manager.orientdb.biodbs.uniprot import UniProt
+from ..constants import ENSEMBL, HGNC, UNIPROT, UNKNOWN, REACTOME_SPECIES_TO_ID
 
 log = logging.getLogger(__name__)
 
@@ -27,10 +29,24 @@ def get_hgnc_node_info(gene: HumanGene) -> Tuple[str, str, str]:
     return str(gene.identifier), gene.symbol, HGNC
 
 
+def extract_symbol(structure: Union[dict, list]) -> str:
+    """Recursive method to go through nested structures to get the symbol."""
+    if isinstance(structure, list):
+        symbol = extract_symbol(structure[0])  # Ultimately only want the first dict
+    else:
+        if structure["type"] == "primary":
+            symbol = structure["#text"]
+        else:
+            print(f"No symbol extracted from {structure}")
+
+    return symbol
+
+
 def get_valid_node_parameters(
         node,
         hgnc_manager: HgncManager,
         chebi_manager: ChebiManager,
+        species: int,
 ) -> Tuple[str, str, str]:
     namespace = None
 
@@ -39,8 +55,7 @@ def get_valid_node_parameters(
 
     # Look up in HGNC Manager the HGNC Symbol for a given UniProt or ENSEMBL identifier.
     # If not matches anything, leave it as it is and give a warning.
-    if namespace == 'uniprot':
-
+    if namespace == 'uniprot' and species == 9606:  # Don't want to rock the boat. Keep human lookup the same
         hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(identifier)
 
         if not hgnc_entry:
@@ -54,6 +69,19 @@ def get_valid_node_parameters(
 
         else:
             identifier, name, namespace = get_hgnc_node_info(hgnc_entry[0])
+
+    elif namespace == 'uniprot' and species != 9606:
+        u = UniProt()
+        results = u.query_class(class_name="uniprot", columns=['gene'], with_rid=False, limit=1,
+                                id=identifier, species=species)
+
+        if not results:
+            log.debug('UniProt id: %s could not be converted to a symbol', identifier)
+            namespace = UNIPROT
+
+        else:
+            name = extract_symbol(results[0])
+            namespace = [k for k, v in SPECIES_NAMESPACE.items() if v == species][0]
 
     elif namespace == 'ensembl':
         hgnc_entry = hgnc_manager.get_gene_by_ensembl_id(identifier)
@@ -80,7 +108,7 @@ def get_valid_node_parameters(
             log.debug('Adding Reactome identifier for %s ', node['uri_reactome_id'])
 
     else:
-        log.debug('Not found HGNC Symbol neither Reactome id for %s ', node['uri_id'])
+        log.debug('Not found Symbol neither Reactome id for %s ', node['uri_id'])
 
     if 'display_name' in node:
         name = node['display_name']

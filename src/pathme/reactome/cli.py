@@ -12,7 +12,8 @@ from bio2bel_hgnc import Manager as HgncManager
 from pybel import from_pickle
 from tqdm import tqdm
 
-from pathme.constants import DATA_DIR, DEFAULT_CACHE_CONNECTION, RDF_REACTOME, REACTOME_BEL, REACTOME_FILES
+from pathme.constants import DATA_DIR, DEFAULT_CACHE_CONNECTION
+from pathme.constants import RDF_REACTOME, REACTOME_BEL, REACTOME_FILES, REACTOME_FILE_LIST
 from pathme.export_utils import get_paths_in_folder
 from pathme.reactome.rdf_sparql import get_reactome_statistics, reactome_to_bel
 from pathme.reactome.utils import untar_file
@@ -54,8 +55,6 @@ def bel(verbose):
     else:
         logger.setLevel(logging.INFO)
 
-    t = time.time()
-
     logger.info('Initiating HGNC Manager')
     hgnc_manager = HgncManager()
     chebi_manager = ChebiManager()
@@ -64,11 +63,11 @@ def bel(verbose):
         click.echo('bio2bel_hgnc was not populated. Populating now.')
         hgnc_manager.populate()
 
-    resource_file = os.path.join(REACTOME_FILES, 'Homo_sapiens.owl')
-
-    reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
-
-    logger.info('Reactome exported in %.2f seconds', time.time() - t)
+    for reactome_file in REACTOME_FILE_LIST:
+        t = time.time()
+        resource_file = os.path.join(REACTOME_FILES, reactome_file)
+        reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
+        logger.info(f'Reactome exported file {reactome_file} in {time.time() - t}.2f seconds')
 
 
 @main.command()

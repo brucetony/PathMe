@@ -114,6 +114,12 @@ WIKIPATHWAYS_REACTOME_MAPPINGS = 'https://github.com/ComPath/curation/raw/master
 
 KEGG_KGML_URL = 'http://rest.kegg.jp/get/{}/kgml'
 RDF_REACTOME = 'ftp://ftp.ebi.ac.uk/pub/databases/RDF/reactome/r67/reactome-biopax.tar.bz2'
+REACTOME_FILE_LIST = [
+    'Homo_sapiens.owl',
+    'Rattus_norvegicus.owl',
+    'Mus_musculus.owl',
+    'Drosophila_melanogaster.owl',
+]
 RDF_WIKIPATHWAYS = 'http://data.wikipathways.org/20190610/rdf/wikipathways-20190610-rdf-wp.zip'
 
 KEGG_STATS_COLUMN_NAMES = {
@@ -181,4 +187,11 @@ BEL_STATS_COLUMN_NAMES = {
     'hasReactant': 'BEL Reactants Edges',
     'hasProduct': 'BEL Products Edges',
     'translatedTo': 'BEL Translation Edges',
+}
+
+REACTOME_SPECIES_TO_ID = {
+    'Drosophila_melanogaster': 7227,
+    'Homo_sapiens': 9606,
+    'Mus_musculus': 10090,
+    'Rattus_norvegicus': 10116,
 }
