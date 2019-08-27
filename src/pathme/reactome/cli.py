@@ -67,7 +67,7 @@ def bel(verbose):
         t = time.time()
         resource_file = os.path.join(REACTOME_FILES, reactome_file)
         reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
-        logger.info(f'Reactome exported file {reactome_file} in {time.time() - t}.2f seconds')
+        logger.info(f'Reactome exported file {reactome_file} in {(time.time() - t):.2f} seconds')
 
 
 @main.command()
