@@ -13,7 +13,7 @@ from pybel import from_pickle
 from tqdm import tqdm
 
 from pathme.constants import DATA_DIR, DEFAULT_CACHE_CONNECTION
-from pathme.constants import RDF_REACTOME, REACTOME_BEL, REACTOME_FILES, REACTOME_FILE_LIST
+from pathme.constants import RDF_REACTOME, REACTOME_BEL, REACTOME_FILES, REACTOME_FILE_LIST, REACTOME_SPECIES_TO_ID
 from pathme.export_utils import get_paths_in_folder
 from pathme.reactome.rdf_sparql import get_reactome_statistics, reactome_to_bel
 from pathme.reactome.utils import untar_file
@@ -47,13 +47,21 @@ def download():
 
 @main.command()
 @click.option('-v', '--verbose', is_flag=True)
-def bel(verbose):
+@click.option('-s', '--species', default=None)
+def bel(verbose, species):
     """Convert Reactome to BEL."""
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     if verbose:
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
+    files = []
+    if species:
+        species = species.replace(" ", "").split(",")
+        for species_id in species:
+            species_name = [k for k, v in REACTOME_SPECIES_TO_ID.items() if v == int(species_id)][0]
+            files.append(species_name + ".owl")
 
     logger.info('Initiating HGNC Manager')
     hgnc_manager = HgncManager()
@@ -63,7 +71,7 @@ def bel(verbose):
         click.echo('bio2bel_hgnc was not populated. Populating now.')
         hgnc_manager.populate()
 
-    for reactome_file in REACTOME_FILE_LIST:
+    for reactome_file in files or REACTOME_FILE_LIST:
         t = time.time()
         resource_file = os.path.join(REACTOME_FILES, reactome_file)
         reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
