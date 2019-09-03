@@ -328,7 +328,7 @@ def reactome_to_bel(resource_file, hgnc_manager, chebi_manager, export_folder=RE
     pathways_uris_to_names = rdf_graph.query(GET_ALL_PATHWAYS, initNs=PREFIXES)
 
     for pathway_uri, pathway_name in tqdm(pathways_uris_to_names,
-                                          desc=f'Exporting Reactome BEL for species {species_id} to {export_folder}'):
+                                          desc=f'Exporting Reactome BEL for species {species_id}'):
 
         # Take the identifier of the pathway which is placed at the end of the URL and also strip the number
         # next to it. (probably version of pathway)
