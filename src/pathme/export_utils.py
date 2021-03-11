@@ -13,10 +13,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from diffupath.utils import get_dir_list, get_or_create_dir
-
-from bio2bel import ensure_path
-from bio2bel_kegg.constants import KEGG_ORGANISM_URL, MODULE_NAME
+from pathme.constants import KEGG_ORGANISM_URL, KEGG_MODULE_NAME
 from bio2bel_reactome import Manager as ReactomeManager
 from bio2bel_reactome.models import Pathway
 
@@ -36,6 +33,71 @@ from .normalize_names import normalize_graph_names
 from .pybel_utils import flatten_complex_nodes
 
 logger = logging.getLogger(__name__)
+
+
+def ensure_path(
+    prefix: str,
+    url: str,
+    *,
+    path: Optional[str] = None,
+    use_requests: bool = False,
+    force: bool = False,
+    bucket: Optional[str] = None,
+    s3_client = None,
+) -> str:
+    """Download a file if it doesn't exist.
+    :param force: If set to true, will re-download from source and re-upload to S3
+    """
+    if path is None:
+        path = name_from_url(url)
+
+    path = prefix_directory_join(prefix, path)
+
+    if not os.path.exists(path) or force:
+        if bucket is not None:  # try downloading from AWS if available
+            s3_client = _ensure_s3_client(s3_client)
+            s3_key = _get_s3_key(prefix, path)
+            if not _has_file(s3_client, bucket=bucket, key=s3_key) and not force:
+                logger.info('downloading from AWS (bucket=%s): %s to %s', bucket, s3_key, path)
+                s3_client.download_file(bucket, s3_key, path)
+                return path
+
+        logger.info('downloading from source %s to %s', url, path)
+        if use_requests:
+            res = requests.get(url)
+            with open(path, 'wb') as file:
+                file.write(res.content)
+        else:
+            urlretrieve(url, path)  # noqa:S310
+
+    if bucket is not None:
+        s3_client = _ensure_s3_client(s3_client)
+        s3_key = _get_s3_key(prefix, path)
+        if _has_file(s3_client, bucket=bucket, key=s3_key) and not force:
+            logger.debug('already available on S3. Not uploading again.')
+            return path
+
+        logger.info('uploading to AWS (bucket=%s): %s to %s', bucket, path, s3_key)
+        s3_client.upload_file(path, bucket, s3_key)
+
+    return path
+
+
+def get_or_create_dir(path, basename=True) -> List[str]:
+    """If a folder in path exist retrieve list of files, else create folder."""
+    if not os.path.exists(path):
+        os.makedirs(path)
+        return []
+    else:
+        return get_files_list(path, basename)
+
+
+def get_dir_list(path, basename=False):
+    """Get list of directories in path."""
+    if basename:
+        return [os.path.basename(os.path.normpath(f)) for f in glob(os.path.join(path, "*")) if os.path.isdir(f)]
+    else:
+        return [f for f in glob(os.path.join(path, "*")) if os.path.isdir(f)]
 
 
 def add_annotation_key(graph: BELGraph):
@@ -382,7 +444,7 @@ def get_organisms_df(url: Optional[str] = None) -> pd.DataFrame:
     :rtype: pandas.DataFrame
     """
     df = pd.read_csv(
-        url or ensure_path(MODULE_NAME, KEGG_ORGANISM_URL, path='organisms.tsv'),
+        url or ensure_path(KEGG_MODULE_NAME, KEGG_ORGANISM_URL, path='organisms.tsv'),
         sep='\t',
         header=None,
         names=[

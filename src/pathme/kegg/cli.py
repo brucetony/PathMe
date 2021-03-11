@@ -34,7 +34,7 @@ def main():
 @click.option('-c', '--connection', help=f"Defaults to {KEGG_FILES}")
 def download(connection):
     """Download KEGG KGML."""
-    kegg_ids = get_kegg_pathway_ids(connection=connection)
+    kegg_ids = get_kegg_pathway_ids()
 
     if click.confirm(
         'You are about to download KGML files from KEGG.\n'

@@ -24,7 +24,10 @@ def get_data_dir() -> str:
 
 
 DATA_DIR = get_data_dir()
-DEFAULT_CACHE_CONNECTION = get_connection()
+# DEFAULT_CACHE_CONNECTION = get_connection()
+
+KEGG_ORGANISM_URL = 'http://rest.kegg.jp/list/organism'
+KEGG_MODULE_NAME = 'kegg'
 
 # Databases contained in PathMe
 #: KEGG
@@ -93,6 +96,10 @@ MIRBASE = 'mirbase'
 HGNC = 'HGNC'
 #: HGNC Symbol
 HGNC_SYMBOL = 'HGNC symbol'
+#: ZFIN
+ZFIN = 'ZFIN'
+#: HGNC Symbol
+ZFIN_SYMBOL = 'ZFIN symbol'
 #: ENSEMBL
 ENSEMBL = 'ENSEMBL'
 #: EXPASY

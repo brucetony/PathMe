@@ -21,21 +21,20 @@ __all__ = [
 ]
 
 
-def get_kegg_pathway_ids(connection=None):
+def get_kegg_pathway_ids():
     """Return a list of all pathway identifiers stored in the KEGG database.
 
     :param Optional[str] connection: connection to the database
     :returns: list of all kegg_pathway_ids
     :rtype: list
     """
-    kegg_manager = KeggManager(connection=connection)
-    kegg_pathways_ids = [
-        pathway.resource_id.replace('path:', '')
-        for pathway in kegg_manager.get_all_pathways()
-    ]
 
-    if not kegg_pathways_ids:
-        raise EnvironmentError('Your database is empty. Please run python3 -m bio2bel_kegg populate')
+    dre_paths_url = "http://rest.kegg.jp/list/pathway/dre"
+    resp = requests.get(dre_paths_url)
+    content = resp.text
+    lines = content.split("\n")
+    paths = [x.split("\t")[0] for x in lines]
+    kegg_pathways_ids = [x.replace('path:', '') for x in paths]
 
     return kegg_pathways_ids
 

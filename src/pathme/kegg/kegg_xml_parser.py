@@ -8,15 +8,21 @@ import logging
 import os
 from collections import defaultdict
 from xml.etree.ElementTree import parse
+from ebel import Bel
+from ebel.manager.orientdb.base import ODatabase
 
 import requests
 
 from bio2bel_kegg.constants import API_KEGG_GET
-from bio2bel_kegg.parsers import parse_description
-from ..constants import CHEBI, CHEBI_NAME, HGNC, HGNC_SYMBOL, KEGG_CACHE, KEGG_ID, KEGG_TYPE, PUBCHEM, UNIPROT
+from bio2bel_kegg.parsers.description import parse_description
+from ..constants import CHEBI, CHEBI_NAME, HGNC, HGNC_SYMBOL, KEGG_CACHE, KEGG_ID, KEGG_TYPE, PUBCHEM, UNIPROT, \
+    ZFIN, ZFIN_SYMBOL
 from ..wikipathways.utils import merge_two_dicts
 
 logger = logging.getLogger(__name__)
+
+client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
+ebel = Bel(client)
 
 
 def import_xml_etree(filename):
@@ -53,7 +59,7 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager, orientd
 
         for resource, identifier in node_meta_data['DBLINKS']:
 
-            if resource not in {HGNC, UNIPROT, CHEBI, PUBCHEM, MGI, RGD, FLYBASE}:
+            if resource not in {HGNC, UNIPROT, CHEBI, PUBCHEM, ZFIN}:
                 continue
 
             # Get protein identifiers
@@ -66,50 +72,18 @@ def _post_process_api_query(node_meta_data, hgnc_manager, chebi_manager, orientd
                 node_dict[HGNC] = identifier
                 node_dict[HGNC_SYMBOL] = hgnc_entry.symbol
 
-            elif resource == MGI:
-                client = orientdb_client if orientdb_client else None
-                network = Network(client=client)
-                data = network.query_class(class_name="mgi",
-                                           columns=['symbol'],
-                                           with_rid=False,
-                                           accession=identifier)
+            elif resource == ZFIN:
+                data = ebel.query_class(class_name="zfin",
+                                        columns=['symbol'],
+                                        with_rid=False,
+                                        zfin_id=identifier)
 
                 if not data:
                     continue
 
                 symbol = data[0]['symbol']  # Use the first element
-                node_dict[MGI] = identifier
-                node_dict[MGI_SYMBOL] = symbol
-
-            elif resource == RGD:
-                client = orientdb_client if orientdb_client else None
-                network = Network(client=client)
-                data = network.query_class(class_name="rgd",
-                                           columns=['symbol'],
-                                           with_rid=False,
-                                           gene_rgd_id=identifier)
-
-                if not data:
-                    continue
-
-                symbol = data[0]['symbol']  # Use the first element
-                node_dict[RGD] = identifier
-                node_dict[RGD_SYMBOL] = symbol
-
-            elif resource == FLYBASE:
-                client = orientdb_client if orientdb_client else None
-                network = Network(client=client)
-                data = network.query_class(class_name="flybase",
-                                           columns=['symbol'],
-                                           with_rid=False,
-                                           flybase_id=identifier)
-
-                if not data:
-                    continue
-
-                symbol = data[0]['symbol']  # Use the first element
-                node_dict[FLYBASE] = identifier
-                node_dict[FLYBASE_SYMBOL] = symbol
+                node_dict[ZFIN] = identifier
+                node_dict[ZFIN_SYMBOL] = symbol
 
             elif resource == UNIPROT:
                 hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(identifier)

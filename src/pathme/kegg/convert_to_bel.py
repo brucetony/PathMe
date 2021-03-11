@@ -185,21 +185,9 @@ def gene_to_bel_node(graph, node):
                 graph.add_node_from_data(protein_node)
                 return protein_node
 
-            elif MGI in attribute:
-                protein_node = protein(namespace=MGI, name=attribute[MGI_SYMBOL],
-                                       identifier=attribute[MGI])
-                graph.add_node_from_data(protein_node)
-                return protein_node
-
-            elif RGD in attribute:
-                protein_node = protein(namespace=RGD, name=attribute[RGD_SYMBOL],
-                                       identifier=attribute[RGD])
-                graph.add_node_from_data(protein_node)
-                return protein_node
-
-            elif FLYBASE in attribute:
-                protein_node = protein(namespace=FLYBASE.upper(), name=attribute[FLYBASE_SYMBOL],
-                                       identifier=attribute[FLYBASE])
+            elif ZFIN in attribute:
+                protein_node = protein(namespace=ZFIN, name=attribute[ZFIN_SYMBOL],
+                                       identifier=attribute[ZFIN])
                 graph.add_node_from_data(protein_node)
                 return protein_node
 
