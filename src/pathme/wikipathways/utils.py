@@ -131,9 +131,9 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
         else:
             raise ValueError(f'Missing ensemble identifier [pathway={pathway_id}]')
 
-        up_sql = "SELECT symbol FROM zfin WHERE ensembl.gene_id_short = '{}'"
+        ens_sql = "SELECT symbol FROM zfin WHERE ensembl.gene_id_short = '{}'"
 
-        zfin_results = ebel.client.command(up_sql.format(ensembl_id))
+        zfin_results = ebel.client.command(ens_sql.format(ensembl_id))
         zfin_symbol = zfin_results[0].oRecordData['symbol']
 
         return ZFIN, zfin_symbol, ensembl_id

@@ -6,16 +6,22 @@ import logging
 import tarfile
 from typing import List, Tuple
 
+from ebel import Bel
+from ebel.manager.orientdb.base import ODatabase
+
 from bio2bel_chebi import Manager as ChebiManager
 from bio2bel_hgnc import Manager as HgncManager
 from bio2bel_hgnc.models import HumanGene
 from pybel.dsl import protein
-from ..constants import ENSEMBL, HGNC, UNIPROT, UNKNOWN
+from ..constants import ENSEMBL, HGNC, UNIPROT, UNKNOWN, ZFIN
 from ..utils import parse_id_uri
 
 logger = logging.getLogger(__name__)
 
 """Download utilities"""
+
+client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
+ebel = Bel(client)
 
 
 def get_hgnc_node_info(gene: HumanGene) -> Tuple[str, str, str]:
@@ -40,29 +46,33 @@ def get_valid_node_parameters(
     # If not matches anything, leave it as it is and give a warning.
     if namespace == 'uniprot':
 
-        hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(identifier)
+        up_sql = "SELECT symbol FROM zfin WHERE uniprot.id = '{}'"
+        zfin_results = ebel.client.command(up_sql.format(identifier))
+        zfin_symbol = zfin_results[0].oRecordData['symbol']
 
-        if not hgnc_entry:
+        if not zfin_symbol:
             logger.debug('UniProt id: %s could not be converted to HGNC', identifier)
             namespace = UNIPROT
 
         # Multiple HGNC entries match the UniProt ID
-        elif 1 < len(hgnc_entry):
-            identifier = hgnc_entry
+        elif 1 < len(zfin_symbol):
+            identifier = zfin_symbol
             namespace = 'hgnc_multiple_entry'
 
         else:
-            identifier, name, namespace = get_hgnc_node_info(hgnc_entry[0])
+            identifier, name, namespace = identifier, zfin_symbol, ZFIN
 
     elif namespace == 'ensembl':
-        hgnc_entry = hgnc_manager.get_gene_by_ensembl_id(identifier)
+        ens_sql = "SELECT symbol FROM zfin WHERE ensembl.gene_id_short = '{}'"
+        zfin_results = ebel.client.command(ens_sql.format(ensembl_id))
+        zfin_symbol = zfin_results[0].oRecordData['symbol']
 
-        if not hgnc_entry:
-            logger.debug('ENSEMBL id: %s could not be converted to HGNC', identifier)
+        if not zfin_symbol:
+            logger.debug('ENSEMBL id: %s could not be converted to ZFIN', identifier)
             namespace = ENSEMBL
 
         else:
-            identifier, name, namespace = get_hgnc_node_info(hgnc_entry)
+            identifier, name, namespace = identifier, zfin_symbol, ZFIN
 
     elif namespace == 'obo' and 'CHEBI' in identifier:
         namespace = 'chebi'
@@ -111,7 +121,7 @@ def process_multiple_proteins(hgnc_entries: List) -> List:
     :return: List of Protein BEL nodes
     """
     return [
-        protein(namespace='HGNC', name=hgnc_entry.symbol, identifier=hgnc_entry.id)
+        protein(namespace='ZFIN', name=hgnc_entry.symbol, identifier=hgnc_entry.id)
         for hgnc_entry in hgnc_entries
     ]
 
