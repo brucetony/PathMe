@@ -3,35 +3,31 @@
 """This module contains the methods to convert a KEGG RDF network into a BELGraph."""
 
 import logging
-import os
 from collections import defaultdict
 from itertools import product
 
 import tqdm
-
 from pybel import BELGraph, to_pickle
-from pybel.dsl import abundance, bioprocess, complex_abundance, composite_abundance, pmod, protein, reaction
 from pybel.dsl.edges import activity
 from pybel.dsl.node_classes import CentralDogma
+from pybel.dsl.nodes import bioprocess, composite_abundance, pmod, reaction
 from pybel.struct import add_annotation_value
 from pybel.struct.summary import count_functions, edge_summary
-from .kegg_xml_parser import (
+
+from pathme.constants import *
+from pathme.export_utils import add_annotation_key
+from pathme.kegg.kegg_xml_parser import (
     get_all_reactions, get_all_relationships, get_complex_components, get_entity_nodes, get_reaction_pathway_edges,
     import_xml_etree,
 )
-from ..constants import (
-    ACTIVITY_ALLOWED_MODIFIERS, CHEBI, CHEBI_NAME, HGNC, HGNC_SYMBOL, KEGG, KEGG_BEL, KEGG_CITATION, KEGG_ID,
-    KEGG_MODIFICATIONS, PUBCHEM, UNIPROT,
-)
-from ..export_utils import add_annotation_key
-from ..utils import add_bel_metadata
+from pathme.utils import add_bel_metadata
 
 __all__ = [
     'kegg_to_bel',
     'kegg_to_pickles',
 ]
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 """Populate empty BEL graph with KEGG pathway entities and interactions"""
 
@@ -53,7 +49,7 @@ def kegg_to_bel(path, hgnc_manager, chebi_manager, flatten=False):
         version='1.0.0',
         description=root.attrib['link'],
         authors="Daniel Domingo-Fernández, Josep Marín-Llaó and Sarah Mubeen",
-        contact='daniel.domingo.fernandez@scai.fraunhofer.de',
+        contact='daniel.domingo.fernandez@scai.fraunhofer.de'
     )
 
     add_bel_metadata(graph)
@@ -77,7 +73,7 @@ def kegg_to_bel(path, hgnc_manager, chebi_manager, flatten=False):
         graph=graph,
         node_dict=nodes,
         complex_ids=complex_ids,
-        flatten_complexes=flattened_complexes if flatten else None,
+        flatten_complexes=flattened_complexes if flatten else None
     )
 
     # Add edges to graph
@@ -184,10 +180,8 @@ def gene_to_bel_node(graph, node):
                 return protein_node
 
             elif UNIPROT in attribute:
-                protein_node = protein(
-                    namespace=UNIPROT.upper(), name=attribute[UNIPROT],
-                    identifier=attribute[UNIPROT],
-                )
+                protein_node = protein(namespace=UNIPROT.upper(), name=attribute[UNIPROT],
+                                       identifier=attribute[UNIPROT])
                 graph.add_node_from_data(protein_node)
                 return protein_node
 
@@ -321,11 +315,13 @@ def compound_to_bel(graph, node):
         node_dict = node[0]
 
         if CHEBI in node_dict:
+
             compound = abundance(namespace=CHEBI.upper(), name=node_dict[CHEBI_NAME], identifier=node_dict[CHEBI])
             graph.add_node_from_data(compound)
             return compound
 
         elif PUBCHEM in node_dict:
+
             compound = abundance(namespace=PUBCHEM.upper(), name=node_dict[PUBCHEM], identifier=node_dict[PUBCHEM])
             graph.add_node_from_data(compound)
             return compound
@@ -414,11 +410,11 @@ def map_to_bel_node(graph, node):
         identifier = attribute[KEGG_ID]
 
         if not name:
-            logger.debug(f"KEGG API does not provide information about {node}. Using identifier.")
+            log.debug(f"KEGG API does not provide information about {node}. Using identifier.")
             name = identifier
 
         if name.startswith('TITLE:'):
-            name = name[len('TITLE:'):]
+            name = name.strip('TITLE:')
 
         bio_process = bioprocess(namespace=KEGG.upper(), name=name, identifier=identifier)
         graph.add_node_from_data(bio_process)
@@ -609,8 +605,7 @@ def add_simple_edge(graph, u, v, relation_type):
                 )
                 return
 
-            # Found multiple relationship which cannot be combined into one logic
-            # (e.g., ['inhibition', 'indirect effect'])
+            # Found multiple relationship which cannot be combined into one logic (e.g., ['inhibition', 'indirect effect'])
             else:
                 # Create all relationships in the list
                 for relation in relation_type:
@@ -753,13 +748,13 @@ def kegg_to_pickles(resource_files, resource_folder, hgnc_manager, chebi_manager
         export_folder = resource_folder
 
     for kgml_file in tqdm.tqdm(resource_files, desc=f'Exporting KEGG to BEL in {export_folder}'):
-        _name = kgml_file[:-len('.xml')]
-        _flatten = 'flatten' if flatten else 'unflatten'
 
         # Name of file created will be: "hsaXXX_unflatten.pickle" or "hsaXXX_flatten.pickle"
         pickle_path = os.path.join(
             export_folder if export_folder else KEGG_BEL,
-            f'{_name}_{_flatten}.pickle',
+            '{}_{}.pickle'.format(
+                kgml_file.split(".")[0],
+                'flatten' if flatten else 'unflatten')  # By default graphs are unflatten
         )
 
         # Skip not KGML files or file already exists

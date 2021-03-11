@@ -7,17 +7,18 @@ import os
 import time
 
 import click
-from tqdm import tqdm
-
 from bio2bel_chebi import Manager as ChebiManager
 from bio2bel_hgnc import Manager as HgncManager
 from pybel import from_pickle
-from .rdf_sparql import get_reactome_statistics, reactome_to_bel
-from .utils import untar_file
-from ..constants import DATA_DIR, DEFAULT_CACHE_CONNECTION, RDF_REACTOME, REACTOME_BEL, REACTOME_FILES
-from ..export_utils import get_paths_in_folder
-from ..utils import make_downloader, statistics_to_df, summarize_helper
-from ..wikipathways.utils import get_file_name_from_url
+from tqdm import tqdm
+
+from pathme.constants import DATA_DIR, DEFAULT_CACHE_CONNECTION
+from pathme.constants import RDF_REACTOME, REACTOME_BEL, REACTOME_FILES, REACTOME_FILE_LIST, REACTOME_SPECIES_TO_ID
+from pathme.export_utils import get_paths_in_folder
+from pathme.reactome.rdf_sparql import get_reactome_statistics, reactome_to_bel
+from pathme.reactome.utils import untar_file
+from pathme.utils import make_downloader, statistics_to_df, summarize_helper
+from pathme.wikipathways.utils import get_file_name_from_url
 
 __all__ = [
     'main',
@@ -46,7 +47,8 @@ def download():
 
 @main.command()
 @click.option('-v', '--verbose', is_flag=True)
-def bel(verbose):
+@click.option('-s', '--species', default=None)
+def bel(verbose, species):
     """Convert Reactome to BEL."""
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     if verbose:
@@ -54,7 +56,12 @@ def bel(verbose):
     else:
         logger.setLevel(logging.INFO)
 
-    t = time.time()
+    files = []
+    if species:
+        species = species.replace(" ", "").split(",")
+        for species_id in species:
+            species_name = [k for k, v in REACTOME_SPECIES_TO_ID.items() if v == int(species_id)][0]
+            files.append(species_name + ".owl")
 
     logger.info('Initiating HGNC Manager')
     hgnc_manager = HgncManager()
@@ -64,11 +71,11 @@ def bel(verbose):
         click.echo('bio2bel_hgnc was not populated. Populating now.')
         hgnc_manager.populate()
 
-    resource_file = os.path.join(REACTOME_FILES, 'Homo_sapiens.owl')
-
-    reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
-
-    logger.info('Reactome exported in %.2f seconds', time.time() - t)
+    for reactome_file in files or REACTOME_FILE_LIST:
+        t = time.time()
+        resource_file = os.path.join(REACTOME_FILES, reactome_file)
+        reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
+        logger.info(f'Reactome exported file {reactome_file} in {(time.time() - t):.2f} seconds')
 
 
 @main.command()
@@ -88,7 +95,7 @@ def summarize(export_folder):
 
 
 @main.command()
-@click.option('-c', '--connection', help=f"Defaults to {DEFAULT_CACHE_CONNECTION}")
+@click.option('-c', '--connection', help="Defaults to {}".format(DEFAULT_CACHE_CONNECTION))
 @click.option('-v', '--verbose', is_flag=True)
 @click.option('-x', '--only-canonical', default=True, help='Parse only canonical pathways')
 @click.option('-e', '--export', default=False, help='Export to datasheet csv and xls')
