@@ -95,7 +95,7 @@ def node_to_bel(node: Dict, hgnc_manager: Manager, pathway_id) -> BaseEntity:
         elif 'Rna' in node_types:
             return rna(namespace=namespace.upper(), name=name, identifier=identifier)
         else:  # 'GeneProduct' in node_types
-            return gene(namespace=HGNC, name=name, identifier=identifier)
+            return gene(namespace=ZFIN, name=name, identifier=identifier)
 
     elif 'Metabolite' in node_types:
         # Parse URI to get namespace

@@ -9,13 +9,15 @@ import zipfile
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import networkx as nx
+from ebel import Bel
+from ebel.manager.orientdb.base import ODatabase
 
 from bio2bel_hgnc import Manager as HgncManager
 from bio2bel_wikipathways import Manager as WikiPathwaysManager
 from pybel import BELGraph
 from ..constants import (
     BRENDA, CHEMBL, DATA_DIR, ENSEMBL, ENTREZ, EXPASY, HGNC, INTERPRO, KEGG, MIRBASE, PFAM, REACTOME, UNIPROT,
-    WIKIPATHWAYS, WIKIPEDIA,
+    WIKIPATHWAYS, WIKIPEDIA, ZFIN
 )
 from ..export_utils import get_paths_in_folder
 
@@ -23,6 +25,8 @@ WIKIPATHWAYS_DIR = os.path.join(DATA_DIR, WIKIPATHWAYS)
 
 logger = logging.getLogger(__name__)
 
+client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
+ebel = Bel(client)
 
 def evaluate_wikipathways_metadata(metadata: Union[str, Set[str]]) -> str:
     """Evaluate metadata in wikipathways and return the string representation."""
@@ -106,25 +110,15 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
 
         return _validate_query(hgnc_manager, hgnc_entry, hgnc_symbol, HGNC)
 
-    # Try to get ENTREZ id
-    elif 'bdb_ncbigene' in node_ids_dict or 'ncbiprotein' in node_ids_dict['uri_id']:
-        if 'bdb_ncbigene' in node_ids_dict:
-            entrez_id = check_multiple(node_ids_dict['bdb_ncbigene'], 'bdb_ncbigene', pathway_id)
-        elif 'ncbiprotein' in node_ids_dict['uri_id']:
-            entrez_id = check_multiple(node_ids_dict['identifier'], 'ncbiprotein', pathway_id)
-        else:
-            raise ValueError(f'Missing entrez gene identifier [pathway={pathway_id}]')
-
-        hgnc_entry = hgnc_manager.get_gene_by_entrez_id(entrez_id)
-
-        return _validate_query(hgnc_manager, hgnc_entry, entrez_id, ENTREZ)
-
     # Try to get UniProt id
     elif 'bdb_uniprot' in node_ids_dict:
+        up_sql = "SELECT symbol FROM zfin WHERE uniprot.id = '{}'"
         uniprot_id = check_multiple(node_ids_dict['bdb_uniprot'], 'bdb_uniprot', pathway_id)
-        hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(uniprot_id)
 
-        return _validate_query(hgnc_manager, hgnc_entry, uniprot_id, UNIPROT)
+        zfin_results = ebel.client.command(up_sql.format(uniprot_id))
+        zfin_symbol = zfin_results[0].oRecordData['symbol']
+
+        return ZFIN, zfin_symbol, uniprot_id
 
     # Try to get ENSEMBL id
     elif 'bdb_ensembl' in node_ids_dict or 'ena.embl' in node_ids_dict['uri_id']:
@@ -137,9 +131,12 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
         else:
             raise ValueError(f'Missing ensemble identifier [pathway={pathway_id}]')
 
-        hgnc_entry = hgnc_manager.get_gene_by_uniprot_id(ensembl_id)
+        up_sql = "SELECT symbol FROM zfin WHERE ensembl.gene_id_short = '{}'"
 
-        return _validate_query(hgnc_manager, hgnc_entry, ensembl_id, ENSEMBL)
+        zfin_results = ebel.client.command(up_sql.format(ensembl_id))
+        zfin_symbol = zfin_results[0].oRecordData['symbol']
+
+        return ZFIN, zfin_symbol, ensembl_id
 
     elif 'ec-code' in node_ids_dict['uri_id']:
         ec_number = check_multiple(node_ids_dict['name'], 'ec-code', pathway_id)

@@ -7,7 +7,7 @@ import json
 import logging
 import os
 from collections import defaultdict
-from xml.etree.ElementTree import parse
+from xml.etree.ElementTree import parse, ParseError
 from ebel import Bel
 from ebel.manager.orientdb.base import ODatabase
 
@@ -36,6 +36,10 @@ def import_xml_etree(filename):
         tree = parse(filename)
     except IOError as ioerr:
         logger.warning('File error: %s', ioerr)
+        return None
+    except ParseError as perr:
+        logger.warning(f'File error: {filename} - {perr}')
+        print(filename)
         return None
 
     return tree

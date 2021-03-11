@@ -9,6 +9,7 @@ import time
 import click
 from tqdm import tqdm
 
+from bio2bel.utils import get_connection
 from bio2bel_hgnc import Manager as HgncManager
 from pybel import from_pickle
 from .rdf_sparql import get_wp_statistics, wikipathways_to_pickles
@@ -43,7 +44,7 @@ def download():
 
 
 @main.command()
-@click.option('-c', '--connection', default='DEFAULT_CACHE_CONNECTION', show_default=True)
+@click.option('-c', '--connection', default=get_connection('wikipathways'), show_default=True)
 @click.option('-r', '--resource-folder')
 @click.option('-d', '--export-folder', default=WIKIPATHWAYS_BEL)
 @click.option('-v', '--debug', is_flag=True, default=False, help='Debug mode')
@@ -67,7 +68,7 @@ def bel(connection: str, resource_folder: str, export_folder: str, debug: bool, 
     t = time.time()
 
     if resource_folder is None:
-        resource_folder = os.path.join(WIKIPATHWAYS_FILES, 'wp', 'Human')
+        resource_folder = os.path.join(WIKIPATHWAYS_FILES, 'wp', 'Zebra_fish')
 
     resource_files = iterate_wikipathways_paths(resource_folder, connection, only_canonical)
 
@@ -98,7 +99,7 @@ def summarize(export_folder):
 
 
 @main.command()
-@click.option('-c', '--connection', default='DEFAULT_CACHE_CONNECTION', show_default=True)
+@click.option('-c', '--connection', default=get_connection('wikipathways'), show_default=True)
 @click.option('-v', '--verbose', is_flag=True)
 @click.option('-x', '--only-canonical', default=True, help='Parse only canonical pathways')
 @click.option('-e', '--export', default=False, help='Export to datasheet csv and xls')
