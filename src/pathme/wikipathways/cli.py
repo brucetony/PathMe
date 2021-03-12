@@ -48,7 +48,7 @@ def download():
 @click.option('-r', '--resource-folder')
 @click.option('-d', '--export-folder', default=WIKIPATHWAYS_BEL)
 @click.option('-v', '--debug', is_flag=True, default=False, help='Debug mode')
-@click.option('-x', '--only-canonical', default=True, help='Parse only canonical pathways')
+@click.option('-x', '--only-canonical', default=True, is_flag=True, help='Parse only canonical pathways')
 def bel(connection: str, resource_folder: str, export_folder: str, debug: bool, only_canonical: bool):
     """Convert WikiPathways to BEL."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")

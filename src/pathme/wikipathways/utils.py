@@ -113,9 +113,10 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
         uniprot_id = check_multiple(node_ids_dict['bdb_uniprot'], 'bdb_uniprot', pathway_id)
 
         zfin_results = ebel.client.command(up_sql.format(uniprot_id))
-        zfin_symbol = zfin_results[0].oRecordData['symbol']
+        if zfin_results:
+            zfin_symbol = zfin_results[0].oRecordData['symbol']
 
-        return ZFIN, zfin_symbol, uniprot_id
+            return ZFIN, zfin_symbol, uniprot_id
 
     # Try to get ENSEMBL id
     elif 'bdb_ensembl' in node_ids_dict or 'ena.embl' in node_ids_dict['uri_id']:
@@ -131,9 +132,10 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
         ens_sql = "SELECT symbol FROM zfin WHERE ensembl.gene_id_short = '{}'"
 
         zfin_results = ebel.client.command(ens_sql.format(ensembl_id))
-        zfin_symbol = zfin_results[0].oRecordData['symbol']
+        if zfin_results:
+            zfin_symbol = zfin_results[0].oRecordData['symbol']
 
-        return ZFIN, zfin_symbol, ensembl_id
+            return ZFIN, zfin_symbol, ensembl_id
 
     elif 'ec-code' in node_ids_dict['uri_id']:
         ec_number = check_multiple(node_ids_dict['name'], 'ec-code', pathway_id)

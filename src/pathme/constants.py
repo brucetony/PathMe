@@ -41,7 +41,7 @@ KEGG_CACHE = os.path.join(KEGG_DIR, 'cache')
 REACTOME = 'reactome'
 REACTOME_DIR = os.path.join(DATA_DIR, REACTOME)
 REACTOME_BEL = os.path.join(REACTOME_DIR, 'bel')
-REACTOME_FILES = os.path.join(REACTOME_DIR, 'rdf')
+REACTOME_FILES = os.path.join(REACTOME_DIR, 'rdf', 'biopax')
 
 #: WikiPathways
 WIKIPATHWAYS = 'wikipathways'

@@ -10,7 +10,7 @@ from bio2bel_hgnc import Manager
 from pybel import BELGraph
 from pybel.dsl import BaseEntity, abundance, activity, bioprocess, complex_abundance, gene, protein, rna
 from .utils import check_multiple, evaluate_wikipathways_metadata, get_valid_gene_identifier
-from ..constants import ACTIVITY_ALLOWED_MODIFIERS, HGNC
+from ..constants import ACTIVITY_ALLOWED_MODIFIERS, ZFIN
 from ..utils import add_bel_metadata, parse_id_uri
 
 __all__ = [

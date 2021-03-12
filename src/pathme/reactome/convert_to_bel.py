@@ -34,7 +34,7 @@ __all__ = [
 
 
 def convert_to_bel(nodes: Dict[str, Dict], interactions: List[Tuple[str, str, Dict]], pathway_info: Dict,
-                   hgnc_manager: HgncManager, chebi_manager: ChebiManager, species: int) -> BELGraph:
+                   hgnc_manager: HgncManager, chebi_manager: ChebiManager) -> BELGraph:
     """Convert RDF graph dictionary into BEL graph."""
     uri_id = pathway_info['uri_reactome_id']
 
@@ -60,7 +60,7 @@ def convert_to_bel(nodes: Dict[str, Dict], interactions: List[Tuple[str, str, Di
 
     graph.graph['pathway_id'] = identifier
 
-    nodes = nodes_to_bel(nodes, graph, hgnc_manager, chebi_manager, species)
+    nodes = nodes_to_bel(nodes, graph, hgnc_manager, chebi_manager)
 
     for interaction in interactions:
         participants = interaction['participants']
@@ -72,19 +72,19 @@ def convert_to_bel(nodes: Dict[str, Dict], interactions: List[Tuple[str, str, Di
 
 
 def nodes_to_bel(nodes: Dict[str, Dict], graph: BELGraph, hgnc_manager: HgncManager, chebi_manager: ChebiManager,
-                 species: int) -> Dict[str, BaseEntity]:
+                 ) -> Dict[str, BaseEntity]:
     """Convert dictionary values to BEL nodes."""
     return {
-        node_id: node_to_bel(node_att, graph, hgnc_manager, chebi_manager, species)
+        node_id: node_to_bel(node_att, graph, hgnc_manager, chebi_manager)
         for node_id, node_att in nodes.items()
     }
 
 
-def node_to_bel(node: Dict, graph, hgnc_manager: HgncManager, chebi_manager: ChebiManager, species) -> BaseEntity:
+def node_to_bel(node: Dict, graph, hgnc_manager: HgncManager, chebi_manager: ChebiManager) -> BaseEntity:
     """Convert node dictionary to BEL node object."""
     node_types = node['entity_type']
 
-    identifier, name, namespace = get_valid_node_parameters(node, hgnc_manager, chebi_manager, species)
+    identifier, name, namespace = get_valid_node_parameters(node, hgnc_manager, chebi_manager)
     members = set()
 
     if namespace == 'hgnc_multiple_entry':
@@ -110,7 +110,7 @@ def node_to_bel(node: Dict, graph, hgnc_manager: HgncManager, chebi_manager: Che
 
         if complex_components:
             for component in complex_components:
-                bel_node = node_to_bel(component, graph, hgnc_manager, chebi_manager, species)
+                bel_node = node_to_bel(component, graph, hgnc_manager, chebi_manager)
 
                 members.add(bel_node)
 
