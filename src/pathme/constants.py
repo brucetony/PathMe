@@ -150,7 +150,7 @@ REACTOME_CITATION = '29145629'
 KEGG_KGML_URL = 'http://rest.kegg.jp/get/{}/kgml'
 
 #: Reactome RDF
-RDF_REACTOME = 'ftp://ftp.ebi.ac.uk/pub/databases/RDF/reactome/r67/reactome-biopax.tar.bz2'
+RDF_REACTOME = 'ftp://ftp.ebi.ac.uk/pub/databases/RDF/reactome/r71/reactome-biopax.tar.bz2'
 
 #: WikiPathways RDF
 RDF_WIKIPATHWAYS = 'http://data.wikipathways.org/20210310/rdf/wikipathways-20210310-rdf-wp.zip'

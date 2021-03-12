@@ -65,7 +65,7 @@ def bel(verbose):
         click.echo('bio2bel_hgnc was not populated. Populating now.')
         hgnc_manager.populate()
 
-    resource_file = os.path.join(REACTOME_FILES, 'Homo_sapiens.owl')
+    resource_file = os.path.join(REACTOME_FILES, 'Danio_rerio.owl')
 
     reactome_to_bel(resource_file, hgnc_manager, chebi_manager)
 
@@ -89,7 +89,7 @@ def summarize(export_folder):
 
 
 @main.command()
-@click.option('-c', '--connection', help=f"Defaults to {'DEFAULT_CACHE_CONNECTION'}")
+@click.option('-c', '--connection', help=f"Defaults to blah")
 @click.option('-v', '--verbose', is_flag=True)
 @click.option('-x', '--only-canonical', default=True, help='Parse only canonical pathways')
 @click.option('-e', '--export', default=False, help='Export to datasheet csv and xls')
