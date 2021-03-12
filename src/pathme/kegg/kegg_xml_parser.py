@@ -8,8 +8,6 @@ import logging
 import os
 from collections import defaultdict
 from xml.etree.ElementTree import parse, ParseError
-from ebel import Bel
-from ebel.manager.orientdb.base import ODatabase
 
 import requests
 
@@ -18,11 +16,9 @@ from bio2bel_kegg.parsers.description import parse_description
 from ..constants import CHEBI, CHEBI_NAME, HGNC, HGNC_SYMBOL, KEGG_CACHE, KEGG_ID, KEGG_TYPE, PUBCHEM, UNIPROT, \
     ZFIN, ZFIN_SYMBOL
 from ..wikipathways.utils import merge_two_dicts
+from ..utils import ebel
 
 logger = logging.getLogger(__name__)
-
-client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
-ebel = Bel(client)
 
 
 def import_xml_etree(filename):

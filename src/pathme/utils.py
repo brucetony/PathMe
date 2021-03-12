@@ -15,6 +15,8 @@ import click
 import pandas as pd
 import rdflib
 
+from ebel import Bel
+from ebel.manager.orientdb.base import ODatabase
 import pybel
 from pybel import BELGraph, from_pickle
 from pybel.constants import GRAPH_NAMESPACE_URL
@@ -27,6 +29,9 @@ from .constants import (
 from .export_utils import get_paths_in_folder
 
 logger = logging.getLogger(__name__)
+
+client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
+ebel = Bel(client)
 
 
 class CallCounted:

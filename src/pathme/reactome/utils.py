@@ -6,22 +6,16 @@ import logging
 import tarfile
 from typing import List, Tuple
 
-from ebel import Bel
-from ebel.manager.orientdb.base import ODatabase
-
 from bio2bel_chebi import Manager as ChebiManager
 from bio2bel_hgnc import Manager as HgncManager
 from bio2bel_hgnc.models import HumanGene
 from pybel.dsl import protein
 from ..constants import ENSEMBL, HGNC, UNIPROT, UNKNOWN, ZFIN
-from ..utils import parse_id_uri
+from ..utils import parse_id_uri, ebel
 
 logger = logging.getLogger(__name__)
 
 """Download utilities"""
-
-client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
-ebel = Bel(client)
 
 
 def get_hgnc_node_info(gene: HumanGene) -> Tuple[str, str, str]:

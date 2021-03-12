@@ -9,8 +9,6 @@ import zipfile
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import networkx as nx
-from ebel import Bel
-from ebel.manager.orientdb.base import ODatabase
 
 from bio2bel_hgnc import Manager as HgncManager
 from bio2bel_wikipathways import Manager as WikiPathwaysManager
@@ -20,13 +18,12 @@ from ..constants import (
     WIKIPATHWAYS, WIKIPEDIA, ZFIN
 )
 from ..export_utils import get_paths_in_folder
+from ..utils import ebel
 
 WIKIPATHWAYS_DIR = os.path.join(DATA_DIR, WIKIPATHWAYS)
 
 logger = logging.getLogger(__name__)
 
-client = ODatabase(name='zetomap', user='guest', password='zetomap', server='localhost', port=2424).client
-ebel = Bel(client)
 
 def evaluate_wikipathways_metadata(metadata: Union[str, Set[str]]) -> str:
     """Evaluate metadata in wikipathways and return the string representation."""
