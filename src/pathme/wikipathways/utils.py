@@ -72,7 +72,7 @@ def _validate_query(
 
     # Invalid entry, proceed with invalid identifier
     if not query_result:
-        logger.debug('No found HGNC Symbol for id %s in (%s)', original_identifier, original_namespace)
+        logger.debug('No HGNC Symbol found for id %s in (%s)', original_identifier, original_namespace)
         return original_namespace, original_identifier, original_identifier
 
     # Multiple entries are returned, for UniProt identifiers
@@ -93,7 +93,23 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
     :return: namespace, name, identifier
     """
     # Try to get hgnc symbol
-    if 'bdb_hgncsymbol' in node_ids_dict or 'hgnc' in node_ids_dict['uri_id']:
+    if 'zfin' in node_ids_dict['uri_id']:
+        zfin_symbol_query = "SELECT symbol FROM zfin WHERE symbol = '{}' OR zfin_id = '{}'"
+        results = ebel.client.command(zfin_symbol_query.format(node_ids_dict['name'], node_ids_dict['identifier']))
+
+        if results:
+            zfin_entry = results[0].oRecordData['symbol']
+            if zfin_entry:
+                zfin_symbol = zfin_entry
+            else:
+                zfin_symbol = node_ids_dict['name'] or node_ids_dict['identifier']
+
+            return ZFIN, zfin_symbol, zfin_symbol
+
+        else:
+            return _validate_query(hgnc_manager, None, node_ids_dict['name'] or node_ids_dict['identifier'], ZFIN)
+
+    elif 'bdb_hgncsymbol' in node_ids_dict or 'hgnc' in node_ids_dict['uri_id']:
 
         if 'hgnc' in node_ids_dict['uri_id']:
             hgnc_entry = hgnc_manager.get_gene_by_hgnc_id(node_ids_dict['identifier'])
@@ -118,6 +134,9 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
 
             return ZFIN, zfin_symbol, uniprot_id
 
+        else:
+            return _validate_query(hgnc_manager, None, uniprot_id, UNIPROT)
+
     # Try to get ENSEMBL id
     elif 'bdb_ensembl' in node_ids_dict or 'ena.embl' in node_ids_dict['uri_id']:
         if 'bdb_ensembl' in node_ids_dict:
@@ -136,6 +155,9 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
             zfin_symbol = zfin_results[0].oRecordData['symbol']
 
             return ZFIN, zfin_symbol, ensembl_id
+
+        else:
+            return _validate_query(hgnc_manager, None, ensembl_id, ENSEMBL)
 
     elif 'ec-code' in node_ids_dict['uri_id']:
         ec_number = check_multiple(node_ids_dict['name'], 'ec-code', pathway_id)
