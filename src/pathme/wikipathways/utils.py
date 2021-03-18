@@ -206,7 +206,7 @@ def get_valid_gene_identifier(node_ids_dict, hgnc_manager: HgncManager, pathway_
     elif 'reactome' in node_ids_dict['uri_id']:
         return REACTOME, node_ids_dict['name'], node_ids_dict['identifier']
 
-    raise Exception('Unknown identifier for node %s', node_ids_dict)
+    raise Exception(f'Unknown identifier for node {node_ids_dict}')
 
 
 MULTIPLE_RE = re.compile('^[A-Z0-9]+$')
